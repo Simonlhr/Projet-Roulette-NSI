@@ -1,0 +1,102 @@
+import random
+import os
+
+FICHIER_PIOCHES = "noms_pioches.txt"
+
+def demander_noms():
+    """
+    Demande à l'utilisateur d'entrer des noms, un par un.
+    L'entrée s'arrête lorsqu'une ligne vide est saisie.
+    
+    Returns:
+        list: Une liste de noms saisis par l'utilisateur.
+    """
+    noms = []
+    print("Entrez des noms (appuyez sur Entrée sans rien taper pour arrêter) :")
+    while True:
+        nom = input("Nom : ")
+        if nom == "":
+            break
+        noms.append(nom)
+    return noms
+
+def charger_pioches():
+    """
+    Charge la liste des noms déjà piochés depuis un fichier.
+    
+    Returns:
+        list: Une liste des noms déjà piochés.
+    """
+    if not os.path.exists(FICHIER_PIOCHES):
+        return []
+    with open(FICHIER_PIOCHES, "r") as fichier:
+        return [ligne.strip() for ligne in fichier]
+
+def sauvegarder_pioche(nom):
+    """
+    Ajoute un nom pioché dans le fichier.
+    
+    Args:
+        nom (str): Le nom à ajouter.
+    """
+    with open(FICHIER_PIOCHES, "a") as fichier:
+        fichier.write(nom + "\n")
+
+def reinitialiser_pioches():
+    """
+    Réinitialise les noms piochés en vidant le fichier.
+    """
+    if os.path.exists(FICHIER_PIOCHES):
+        os.remove(FICHIER_PIOCHES)
+    print("Les pioches ont été réinitialisées.")
+
+def choisir_nom_aleatoire_excluant(liste_noms, exclu, pioches):
+    """
+    Retourne un nom aléatoire parmi une liste de noms, en excluant un nom spécifique
+    et les noms déjà piochés.
+    
+    Args:
+        liste_noms (list): Une liste de noms.
+        exclu (str): Le nom à exclure.
+        pioches (list): Une liste de noms déjà piochés.
+    
+    Returns:
+        str: Un nom choisi aléatoirement ou None si aucun nom valide.
+    """
+    noms_restants = [nom for nom in liste_noms if nom != exclu and nom not in pioches]
+    if not noms_restants:
+        return None
+    return random.choice(noms_restants)
+
+# Programme principal
+noms = demander_noms()
+if noms:
+    while True:  # Boucle pour permettre à plusieurs personnes de participer
+        pioches = charger_pioches()
+        print(f"Noms déjà piochés : {', '.join(pioches) if pioches else 'Aucun'}")
+        
+        utilisateur = input("Qui es-tu parmi les noms tapés ? ")
+        if utilisateur not in noms:
+            print("Erreur : tu n'es pas dans la liste.")
+            continue  # Recommence la boucle
+        
+        nom_aleatoire = choisir_nom_aleatoire_excluant(noms, utilisateur, pioches)
+        if nom_aleatoire:
+            print(f"Nom choisi aléatoirement (autre que toi et ceux déjà piochés) : {nom_aleatoire}")
+            sauvegarder_pioche(nom_aleatoire)
+        else:
+            print("Aucun autre nom disponible dans la liste.")
+            break  # Arrête la boucle si plus de noms disponibles
+        
+        # Demande si une autre personne veut participer
+        continuer = input("Une autre personne veut piocher ? (oui/non) : ").strip().lower()
+        if continuer != "oui":
+            break
+        
+        # Option pour réinitialiser les pioches
+        reinitialiser = input("Voulez-vous réinitialiser les pioches ? (oui/non) : ").strip().lower()
+        if reinitialiser == "oui":
+            reinitialiser_pioches()
+
+else:
+    print("Aucun nom n'a été saisi.")
